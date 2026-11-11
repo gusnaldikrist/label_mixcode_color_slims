@@ -78,8 +78,10 @@ loadFile('pages/settings');
                 <a target="blindSubmit" href="<?= $_SERVER['PHP_SELF'] . '?' . httpQuery(['action' => 'print']) ?>" class="notAJAX btn btn-primary mx-1"><?= __('Print Barcodes for Selected Data'); ?></a>
                 <a href="<?= $_SERVER['PHP_SELF'] . '?' . httpQuery(['action' => 'settings']) ?>" class="notAJAX btn btn-default openPopUp mx-1" width="780" height="500" title="<?= __('Change print barcode settings'); ?>"><?= __('Change print barcode settings'); ?></a>
             </div>
-            <form name="search" action="<?= $_SERVER['PHP_SELF'] . '?' . httpQuery() ?>" id="search" method="get" class="form-inline"><?= __('Search'); ?>
-                <input type="text" name="keywords" class="form-control col-md-3"/>
+            <form name="search" action="<?= $_SERVER['PHP_SELF'] ?>" id="search" method="get" class="form-inline"><?= __('Search'); ?>
+                <input type="hidden" name="mod" value="<?= htmlspecialchars($_GET['mod'] ?? 'bibliography') ?>"/>
+                <input type="hidden" name="id" value="<?= htmlspecialchars($_GET['id'] ?? '') ?>"/>
+                <input type="text" name="keywords" value="<?= htmlspecialchars($_GET['keywords'] ?? '') ?>" class="form-control col-md-3"/>
                 <input type="submit" id="doSearch" value="<?= __('Search'); ?>" class="s-btn btn btn-default"/>
             </form>
         </div>
@@ -101,8 +103,10 @@ loadFile('pages/settings');
     let h = parseInt(window.innerHeight) - 100
     
     // set attribute
-    popUp.setAttribute('width', w)
-    popUp.setAttribute('height', h)
+    if (popUp) {
+        popUp.setAttribute('width', w)
+        popUp.setAttribute('height', h)
+    }
 </script>
 <?php
 /* Datagrid area */

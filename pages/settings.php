@@ -3,30 +3,27 @@
  * @author Drajat Hasan
  * @email drajathasan20@gmail.com
  * @create date 2021-06-29 08:17:10
- * @modify date 2024-05-19 20:09:43
+ * @modify date 2021-09-24 10:45:36
  * @desc [description]
  */
 
 isDirect();
 
-$_POST = jsonPost();
+$jsonPost = jsonPost();
 
-if (isset($_POST['type']))
+if (is_array($jsonPost) && isset($jsonPost['type']))
 {
     // set key
-    $key = $_POST['type'];
+    $key = $jsonPost['type'];
     // check type
     if (!isset($sysconf['lbc_'.$key])) jsonResponse(['status' => false, 'msg' => 'Data tidak ada!']);
 
     // template available
     $templateCode = ['left', 'right', 'both','settings','color'];
     
-    // set data
-    $data = $sysconf['lbc_'.$key];
-    // unset data
-    unset($_POST['type']);
-    // serialize data
-    $data = $_POST;
+    // unset type
+    unset($jsonPost['type']);
+    $data = $jsonPost;
     // Template check
     if (!in_array(str_replace('Code', '', $key), $templateCode)) jsonResponse(['status' => false, 'msg' => 'Template ' . str_replace('Code', '', $key) . ' tidak ada perhatikan besar kecilnya karakter yang anda masukan.']);
     $serializeData = serialize($data);
@@ -63,9 +60,9 @@ if (isset($_POST['type']))
 }
 
 // Modify for detail
-$codeType = $sysconf['lbc_settings']['codeType'];
+$codeType = $sysconf['lbc_settings']['codeType'] ?? 'Barcode';
 $settings = [];
-foreach ($sysconf['lbc_settings'] as $config => $value) {
+foreach (($sysconf['lbc_settings'] ?? []) as $config => $value) {
     // check
     switch ($config) {
         case 'template':
@@ -86,11 +83,12 @@ foreach ($sysconf['lbc_settings'] as $config => $value) {
             break;
     }
     // set up settings
-    $settings[] = ['key' => $config, 'label' => ucwords($label), 'value' => str_replace('"', '', $value)];
+    $settings[] = ['key' => $config, 'label' => ucwords($label), 'value' => str_replace('"', '', (string)$value)];
 }
 
 // If request is action and action = settings
 if (isset($_GET['action']) && $_GET['action'] === 'settings'):
+    $title = __('Change print barcode settings');
     ob_start();
     ?>
     <!-- Vue Area-->
@@ -105,16 +103,16 @@ if (isset($_GET['action']) && $_GET['action'] === 'settings'):
     <Settings v-if="section === 'settings'" code-type="<?= $codeType ?>" fields="<?= jsonProps($settings) ?>"></Settings>
 
     <!-- Right Code -->
-    <Rightcode v-if="section === 'rightCode'" code-type="<?= $codeType ?>" measurement="<?= jsonProps($sysconf['lbc_rightCode']) ?>" library-name="<?= $sysconf['library_name'] ?>"></Rightcode>
+    <Rightcode v-if="section === 'rightCode'" code-type="<?= $codeType ?>" measurement="<?= jsonProps($sysconf['lbc_rightCode'] ?? []) ?>" library-name="<?= htmlspecialchars($sysconf['library_name'] ?? '', ENT_QUOTES) ?>"></Rightcode>
 
     <!-- Left Code -->
-    <Leftcode v-if="section === 'leftCode'" code-type="<?= $codeType ?>" measurement="<?= jsonProps($sysconf['lbc_leftCode']) ?>" library-name="<?= $sysconf['library_name'] ?>"></Leftcode>
+    <Leftcode v-if="section === 'leftCode'" code-type="<?= $codeType ?>" measurement="<?= jsonProps($sysconf['lbc_leftCode'] ?? []) ?>" library-name="<?= htmlspecialchars($sysconf['library_name'] ?? '', ENT_QUOTES) ?>"></Leftcode>
 
     <!-- Both Code -->
-    <Bothcode v-if="section === 'bothCode'" code-type="<?= $codeType ?>" measurement="<?= jsonProps($sysconf['lbc_bothCode']) ?>" library-name="<?= $sysconf['library_name'] ?>"></Bothcode>
+    <Bothcode v-if="section === 'bothCode'" code-type="<?= $codeType ?>" measurement="<?= jsonProps($sysconf['lbc_bothCode'] ?? []) ?>" library-name="<?= htmlspecialchars($sysconf['library_name'] ?? '', ENT_QUOTES) ?>"></Bothcode>
 
     <!-- Color -->
-    <Selectcolor v-if="section === 'selectColor'" color-string="<?= jsonProps($sysconf['lbc_color']) ?>"></Selectcolor>
+    <Selectcolor v-if="section === 'selectColor'" color-string="<?= jsonProps($sysconf['lbc_color'] ?? []) ?>"></Selectcolor>
 
     <!-- End Vue Area -->
     <?php

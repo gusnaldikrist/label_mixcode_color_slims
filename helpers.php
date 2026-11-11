@@ -9,7 +9,7 @@
 
 function httpQuery(array $query = [])
 {
-    return http_build_query(array_unique(array_merge($_GET, $query)));
+    return http_build_query(array_merge($_GET, $query));
 }
 
 function isDirect()
@@ -30,7 +30,7 @@ function commaToDot($string)
 
 function loadFile($fileToLoad, $type = 'require')
 {
-    global $dbs,$max_print,$sysconf,$content,$settingsTemplate,$chunked_barcode_arrays;
+    global $dbs,$max_print,$sysconf,$content,$settingsTemplate,$chunked_barcode_arrays,$title;
 
     if (file_exists(__DIR__ . '/' . $fileToLoad . '.php')) 
     {
@@ -71,19 +71,24 @@ function jsonPost($key = '')
 
 function sliceCallNumber($string)
 {
-    if (empty($string))
+    if (empty($string) || trim((string)$string) === '')
     {
         return '<b style="color: red">callnumbernya<br/>dimana<br/>udah dimasukin belum di data itemnya?</b>';
     }
 
+    $string = trim((string)$string);
     $split = preg_split('/(?<=\w)\s+(?=[A-Za-z])/m', $string);
     $result = '';
     
     foreach ($split as $index => $stringSplit) {
-        if ($index === 0 && preg_match('/[A-Za-z]/i', substr($stringSplit, 0,1)))
+        if (str_contains($stringSplit, ' '))
         {
             $Plus = explode(' ', $stringSplit);
-            $result .= $Plus[0] . '<br/>' . $Plus[1] . '<br/>';
+            foreach ($Plus as $part) {
+                if ($part !== '') {
+                    $result .= $part . '<br/>';
+                }
+            }
         }
         else
         {
@@ -91,17 +96,32 @@ function sliceCallNumber($string)
         }
     }
 
-    return substr_replace($result, '', -5);
+    return preg_replace('/<br\/>$/', '', $result);
 }
 
 function callNumberColor($string, $arrayColor)
 {
-    $callNumber = substr(trim($string), 0,1);
+    $string = trim((string)($string ?? ''));
+    if ($string === '') {
+        return (isset($arrayColor['default'])) ? $arrayColor['default'] : '#ffffff';
+    }
+
+    $callNumber = substr($string, 0, 1);
 
     if (!preg_match('/[0-9]/i', $callNumber))
     {
         $explodeCallnumber = explode(' ', $string);
-        $code = substr(isset($explodeCallnumber[1]) ? $explodeCallnumber[1] : '?', 0,1);
+        $code = '?';
+        for ($i = 1; $i < count($explodeCallnumber); $i++) {
+            $firstChar = substr($explodeCallnumber[$i], 0, 1);
+            if (preg_match('/[0-9]/', $firstChar)) {
+                $code = $firstChar;
+                break;
+            }
+        }
+        if ($code === '?' && isset($explodeCallnumber[1])) {
+            $code = substr($explodeCallnumber[1], 0, 1);
+        }
     }
     else
     {

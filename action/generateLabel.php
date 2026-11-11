@@ -3,7 +3,7 @@
  * @author Drajat Hasan
  * @email drajathasan20@gmail.com
  * @create date 2021-06-29 08:15:59
- * @modify date 2024-05-19 20:00:27
+ * @modify date 2021-06-29 08:15:59
  * @desc [description]
  */
 
@@ -23,11 +23,11 @@ if (isset($_GET['action']) AND $_GET['action'] == 'print') {
   // global settings
   $globalSettings = $sysconf['lbc_settings'];
   // set settings per Template
-  $settingsTemplate = $sysconf['lbc_' . strtolower($globalSettings['template']) . 'Code'];
+  $settingsTemplate = $sysconf['lbc_' . $globalSettings['template'] . 'Code'];
   // color pallet
   $palletColor = $sysconf['lbc_color'];
   // set Template dir
-  $templateDir = __DIR__.'/../template/'.strtolower($globalSettings['template']) . 'Code_template.php';
+  $templateDir = __DIR__.'/../template/'.$globalSettings['template'] . 'Code_template.php';
 
   if (!isset($settingsTemplate))
   {
@@ -44,7 +44,7 @@ if (isset($_GET['action']) AND $_GET['action'] == 'print') {
   // concat all ID together
   $item_ids = '';
   foreach ($_SESSION['mix_barcodes'] as $id) {
-    $item_ids .= '\''.$id.'\',';
+    $item_ids .= '\''.$dbs->escape_string($id).'\',';
   }
   // strip the last comma
   $item_ids = substr_replace($item_ids, '', -1);
@@ -53,25 +53,37 @@ if (isset($_GET['action']) AND $_GET['action'] == 'print') {
     LEFT JOIN biblio AS b ON i.biblio_id=b.biblio_id
     WHERE i.item_code IN('.$item_ids.')');
   $item_data_array = array();
-  while ($item_d = $item_q->fetch_assoc()) {
-    if ($item_d['item_code']) {
-      $item_data_array[] = $item_d;
+  if ($item_q && $item_q->num_rows > 0) {
+    while ($item_d = $item_q->fetch_assoc()) {
+      if (!empty($item_d['item_code'])) {
+        $item_data_array[] = $item_d;
+      }
     }
+  }
+
+  if (count($item_data_array) < 1) {
+    utility::jsToastr('Item Barcode', __('There is no data to print!'), 'error');
+    die();
   }
 
   // all data
   $allData = count($item_data_array);
 
   // chunk barcode array
-  $chunked_barcode_arrays = array_chunk($item_data_array, $globalSettings['chunk']);
+  $chunkSize = max(1, (int)($globalSettings['chunk'] ?? 2));
+  $chunked_barcode_arrays = array_chunk($item_data_array, $chunkSize);
   
+  // set template title
+  $title = __('Item Barcodes Printing');
+
   // include main template
-  include __DIR__.'/../template/'.strtolower($globalSettings['template']) . 'Code_template.php';
+  include __DIR__.'/../template/'.$globalSettings['template'] . 'Code_template.php';
 
   // unset the session
   unset($_SESSION['mix_barcodes']);
   // write to file
-  $print_file_name = 'label_mixcode_warna_gen_print_result_'.strtolower(str_replace(' ', '_', $_SESSION['uname'])).'.html';
+  $userName = $_SESSION['uname'] ?? 'user';
+  $print_file_name = 'label_mixcode_warna_gen_print_result_'.strtolower(str_replace(' ', '_', $userName)).'.html';
   $file_write = @file_put_contents(UPLOAD.$print_file_name, $html_str);
   if ($file_write) {
     // update print queue count object

@@ -17,7 +17,7 @@ ob_start();
 <!DOCTYPE Html>
 <html>
     <head>
-        <title><?= $title??'' ?></title>
+        <title><?= $title ?? 'Label Mixcode Color' ?></title>
         <link href="<?= $assetPath . '/assets/css/tailwind.min.css'?>" rel="stylesheet"/>
         <style>
 
@@ -43,7 +43,7 @@ ob_start();
                 size: auto;   /* auto is the initial value */ 
 
                 /* this affects the margin in the printer settings */ 
-                margin: <?= $globalSettings['marginPage'] ?>;  
+                margin: <?= $globalSettings['marginPage'] ?? '5mm 5mm 5mm 5mm' ?>;  
             } 
         </style>
     </head>
@@ -62,7 +62,7 @@ ob_start();
                     // slicing number
                     $callNumber = sliceCallNumber($barcode['call_number']);
                     // shorting and slice it
-                    $titleSlice = substr($barcode['title'], 0,5);
+                    $titleSlice = substr($barcode['title'] ?? '', 0, 5);
                     // get color
                     $color = callNumberColor($barcode['call_number'], $palletColor);
                     // set template
@@ -115,7 +115,7 @@ ob_start();
                 $row++;
                 echo '</div>';
                 // set page break
-                echo (($row % $globalSettings['pageBreakAt']) === 0) ? '<div class="pagebreak"></div>' : null;
+                echo (!empty($globalSettings['pageBreakAt']) && ($row % (int)$globalSettings['pageBreakAt']) === 0) ? '<div class="pagebreak"></div>' : null;
             endforeach; 
             ?>
         </div>
@@ -132,16 +132,17 @@ ob_start();
                 // QRcode instance
                 function creatQr(imgSelector,divSelector)
                 {
+                    if (!imgSelector || !divSelector) return;
                     new QRCode(divSelector, {
                         text: imgSelector.dataset.code,
                         render: "canvas",  //Rendering mode specifies canvas mode
                     })
 
                     let canvas = divSelector.children[0];
-        
-                    imgSelector.setAttribute('src', canvas.toDataURL("image/png"))
-
-                    divSelector.classList.add('hidden')
+                    if (canvas && typeof canvas.toDataURL === 'function') {
+                        imgSelector.setAttribute('src', canvas.toDataURL("image/png"))
+                        divSelector.classList.add('hidden')
+                    }
                 }
 
                 // setup for qrcode
@@ -151,7 +152,7 @@ ob_start();
             </script>
         <?php  endif;?>
         <!-- Auto show print dialog -->
-        <?php if ($globalSettings['autoprint']): ?>
+        <?php if (!empty($globalSettings['autoprint'])): ?>
             <script>self.print()</script>
         <?php endif; ?>
     </body>

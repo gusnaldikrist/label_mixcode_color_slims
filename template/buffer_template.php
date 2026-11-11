@@ -4,13 +4,13 @@ isDirect();
 // set path
 $assetPath = SWB . 'plugins/' . pluginDirName();
 // set js type
-$js = (ENVIRONMENT === 'development') ? '.js' : '.min.js';
+$js = (defined('ENVIRONMENT') && ENVIRONMENT === 'development') ? '.js' : '.min.js';
 
 ?>
 <!DOCTYPE Html>
 <html>
     <head>
-        <title><?= $title??'' ?></title>
+        <title><?= $title ?? 'Label Mixcode Color' ?></title>
         <link href="<?= $assetPath . '/assets/css/tailwind.min.css'?>" rel="stylesheet"/>
         <style>
             .rot90 {
